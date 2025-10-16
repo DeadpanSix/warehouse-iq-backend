@@ -1,11 +1,16 @@
 import express from 'express';
-import { getBrands, addBrand, getBrandById, updateBrandDescription } from '../controllers/brands.controller.js';
+import {
+  newBrand,
+  getBrands,
+  getBrand,
+  updateBrand
+} from '../controllers/brands.controller.js';
 
 const router = express.Router();
 
 router.get('/', getBrands);
-router.post('/', addBrand);
-router.get('/:id', getBrandById);
-router.patch('/:id', updateBrandDescription);
+router.get('/:id', getBrand);
+router.post('/', newBrand);
+router.put('/:id', updateBrand);
 
 export default router;
