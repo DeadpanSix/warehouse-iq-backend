@@ -1,75 +1,102 @@
-import db from '../db/connection.js';
+import Product from '../models/Products.js';
+import Status from '../models/Status.js';
+import Brand from '../models/ProductBrands.js';
 
-export const getAllProducts = async () => {
-  return await db('products as p')
-    .leftJoin('status as e', 'p.status_id', 'e.id')
-    .leftJoin('brands as m', 'p.brand_id', 'm.id')
-    .select(
-      'p.id',
-      'p.description',
-      'p.sku',
-      'p.price',
-      'p.stock_quantity',
-      'e.description as status',
-      'm.description as brand'
-    )
-    .where('e.entity', '=', 'products');
-};
+class ProductsService {
+  async getAllProducts() {
+    return await Product.findAll({
+      attributes: ['id', 'description', 'sku', 'price', 'stock_quantity'],
+      include: [
+        {
+          model: Status,
+          as: 'status',
+          attributes: ['description'],
+          where: { entity: 'products' },
+          required: false
+        },
+        {
+          model: Brand,
+          as: 'brand',
+          attributes: ['description'],
+          required: false
+        }
+      ]
+    });
+  }
 
-export const getProductById = async (id) => {
-  const product = await db('products as p')
-    .leftJoin('status as e', 'p.status_id', 'e.id')
-    .leftJoin('brands as m', 'p.brand_id', 'm.id')
-    .select(
-      'p.id',
-      'p.description',
-      'p.sku',
-      'p.price',
-      'p.stock_quantity',
-      'e.description as status',
-      'm.description as brand'
-    )
-    .where('p.id', id)
-    .first();
+  async getProductById(id) {
+    const product = await Product.findOne({
+      where: { id },
+      attributes: ['id', 'description', 'sku', 'price', 'stock_quantity'],
+      include: [
+        {
+          model: Status,
+          as: 'status',
+          attributes: ['description'],
+          required: false
+        },
+        {
+          model: Brand,
+          as: 'brand',
+          attributes: ['description'],
+          required: false
+        }
+      ]
+    });
 
-  return product || null;
-};
+    return product || null;
+  }
 
-export const createProduct = async (data) => {
-  const { description, sku, price, stock_quantity, brand_id } = data;
+  async createProduct(data) {
+    const { description, sku, price, stock_quantity, brand_id } = data;
 
-  const statusActivo = await db('status')
-    .where({ entity: 'products', description: 'Active' })
-    .first();
+    const statusActivo = await Status.findOne({
+      where: { entity: 'products', description: 'Active' }
+    });
 
-  const [newProduct] = await db('products')
-    .insert({
+    if (!statusActivo) {
+      throw new Error('Active status not found for products');
+    }
+
+    const newProduct = await Product.create({
       description,
       sku,
       price,
       stock_quantity,
       brand_id,
       status_id: statusActivo.id
-    })
-    .returning('*');
+    });
 
-  return newProduct;
-};
+    return newProduct;
+  }
 
-export const updateProduct = async (id, data) => {
-  const [updated] = await db('products')
-    .where({ id })
-    .update(data)
-    .returning('*');
+  async updateProduct(id, data) {
+    const [affectedRows] = await Product.update(data, {
+      where: { id },
+      returning: true
+    });
 
-  return updated || null;
-};
+    if (!affectedRows) return null;
+    return await Product.findByPk(id);
+  }
 
-export const deactivateProduct = async (id) => {
-  const [updated] = await db('products')
-    .where({ id })
-    .update({ status_id: 2 })
-    .returning('*');
+  async deactivateProduct(id) {
+    const inactiveStatus = await Status.findOne({
+      where: { entity: 'products', description: 'Inactive' }
+    });
 
-  return updated || null;
-};
+    if (!inactiveStatus) {
+      throw new Error('Inactive status not found for products');
+    }
+
+    const [affectedRows] = await Product.update(
+      { status_id: inactiveStatus.id },
+      { where: { id }, returning: true }
+    );
+
+    if (!affectedRows) return null;
+    return await Product.findByPk(id);
+  }
+}
+
+export default new ProductsService();

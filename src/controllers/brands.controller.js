@@ -1,21 +1,16 @@
-import {
-  getAllBrands,
-  getBrandById,
-  createBrand,
-  updateBrandDescription
-} from '../services/brands.service.js';
+import BrandService from '../services/brands.service.js';
 
 export const getBrands = async (req, res, next) => {
   try {
-    const brands = await getAllBrands();
+    const brands = await BrandService.getAllBrands();
 
-    if (brands.length === 0) {
+    if (!brands || brands.length === 0) {
       return res.status(200).json({ message: 'No brands found', data: [] });
     }
 
     res.status(200).json({ data: brands });
   } catch (err) {
-    if (err.code === '42P01') {
+    if (err.original?.code === '42P01') {
       return res.status(500).json({ error: 'Brands table does not exist' });
     }
     next(err);
@@ -25,13 +20,13 @@ export const getBrands = async (req, res, next) => {
 export const getBrand = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const brand = await getBrandById(id);
+    const brand = await BrandService.getBrandById(id);
 
     if (!brand) {
       return res.status(404).json({ error: 'Brand not found.' });
     }
 
-    res.json(brand);
+    res.status(200).json(brand);
   } catch (err) {
     next(err);
   }
@@ -47,10 +42,10 @@ export const newBrand = async (req, res, next) => {
       });
     }
 
-    const newBrand = await createBrand(description);
+    const newBrand = await BrandService.createBrand(description);
     res.status(201).json(newBrand);
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(409).json({ error: 'Brand already exists.' });
     }
     next(err);
@@ -70,7 +65,7 @@ export const updateBrand = async (req, res, next) => {
         .json({ error: 'Description is longer than 10 characters' });
     }
 
-    const updatedBrand = await updateBrandDescription(id, description);
+    const updatedBrand = await BrandService.updateBrandDescription(id, description);
 
     if (!updatedBrand) {
       return res.status(404).json({ error: 'Brand not found' });

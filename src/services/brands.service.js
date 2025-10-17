@@ -1,26 +1,26 @@
-import db from '../db/connection.js';
+import ProductBrands from '../models/ProductBrands.js';
 
-export const getAllBrands = async () => {
-  const brands = await db('brands').select('*');
-  return brands;
-};
+class BrandService {
+  async getAllBrands() {
+    return await ProductBrands.findAll();
+  }
 
-export const getBrandById = async (id) => {
-  const brand = await db('brands').where({ id }).first();
-  return brand;
-};
+  async getBrandById(id) {
+    return await ProductBrands.findByPk(id);
+  }
 
-export const createBrand = async (description) => {
-  const [newBrand] = await db('brands')
-    .insert({ description })
-    .returning('*');
-  return newBrand;
-};
+  async createBrand(description) {
+    return await ProductBrands.create({ description });
+  }
 
-export const updateBrandDescription = async (id, description) => {
-  const updated = await db('brands')
-    .where({ id })
-    .update({ description })
-    .returning('*');
-  return updated[0];
-};
+  async updateBrandDescription(id, description) {
+    const productBrand = await ProductBrands.findByPk(id);
+    if (!productBrand) return null;
+
+    productBrand.description = description;
+    await productBrand.save();
+    return productBrand;
+  }
+}
+
+export default new BrandService();

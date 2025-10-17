@@ -1,11 +1,13 @@
-import db from '../db/connection.js';
+import Status from '../models/Status.js';
 
-export const getAllStatusService = async () => {
-  const status = await db('status').select('*');
-  return status;
-};
+class StatusService {
+  async getAllStatus() {
+    return await Status.findAll();
+  }
 
-export const getStatusByIdService = async (id) => {
-  const status = await db('status').where({ id }).first();
-  return status;
-};
+  async getStatusById(id) {
+    return await Status.findByPk(id);
+  }
+}
+
+export default new StatusService();
