@@ -4,9 +4,9 @@ services:
     container_name: warehouse-db
     restart: always
     env_file:
-      - .env
+      - .env.production.local
     ports:
-      - "${PG_PORT}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
@@ -21,7 +21,7 @@ services:
     container_name: warehouse-backend
     restart: always
     env_file:
-      - .env
+      - .env.production.local
     depends_on:
       - postgres
     ports:

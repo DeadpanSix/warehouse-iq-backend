@@ -3,7 +3,7 @@
     "username": "postgres",
     "password": "postgres",
     "database": "warehouse_db",
-    "host": "postgres",
+    "host": "db",
     "port": 5432,
     "dialect": "postgres"
   },
@@ -11,7 +11,7 @@
     "username": "postgres",
     "password": "postgres",
     "database": "warehouse_db",
-    "host": "db",
+    "host": "localhost",
     "port": 5432,
     "dialect": "postgres"
   },
@@ -19,7 +19,7 @@
     "username": "postgres",
     "password": "postgres",
     "database": "warehouse_db",
-    "host": "db",
+    "host": "localhost",
     "port": 5432,
     "dialect": "postgres"
   }
