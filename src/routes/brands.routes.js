@@ -11,6 +11,6 @@ const router = express.Router();
 router.get('/', getBrands);
 router.get('/:id', getBrand);
 router.post('/', newBrand);
-router.put('/:id', updateBrand);
+router.patch('/:id', updateBrand);
 
 export default router;

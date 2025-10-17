@@ -1,7 +1,11 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'production'
+  ? '.env.production.local'
+  : '.env.development.local';
+
+dotenv.config({ path: envFile });
 
 const sequelize = new Sequelize(
   process.env.PG_DATABASE,

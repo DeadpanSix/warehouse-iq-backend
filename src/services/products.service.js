@@ -11,7 +11,6 @@ class ProductsService {
           model: Status,
           as: 'status',
           attributes: ['description'],
-          where: { entity: 'products' },
           required: false
         },
         {
@@ -48,14 +47,23 @@ class ProductsService {
   }
 
   async createProduct(data) {
-    const { description, sku, price, stock_quantity, brand_id } = data;
+    const { description, sku, price, stock_quantity, status_id, brand_id } = data;
 
-    const statusActivo = await Status.findOne({
-      where: { entity: 'products', description: 'Active' }
-    });
+    if (price <= 0) throw new Error('Price must be higher than 0');
+    if (stock_quantity < 0) throw new Error('Stock quantity cannot be negative');
 
-    if (!statusActivo) {
-      throw new Error('Active status not found for products');
+    const existingProduct = await Product.findOne({ where: { sku } });
+    if (existingProduct) throw new Error('SKU must be unique');
+
+    if (status_id) {
+      const status = await Status.findByPk(status_id);
+      if (!status) throw new Error('Invalid status_id');
+    }
+
+    if (!brand_id) {
+      const activeBrand = await Brand.findOne({ where: { description: 'Active' } });
+      if (!activeBrand) throw new Error('No brand with description "Active" found');
+      brand_id = activeBrand.id;
     }
 
     const newProduct = await Product.create({
@@ -63,11 +71,17 @@ class ProductsService {
       sku,
       price,
       stock_quantity,
-      brand_id,
-      status_id: statusActivo.id
+      status_id: status_id,
+      brand_id: brand_id || null,
     });
 
-    return newProduct;
+    return await Product.findByPk(newProduct.id, {
+      attributes: ['id', 'description', 'sku', 'price', 'stock_quantity'],
+      include: [
+        { model: Status, as: 'status', attributes: ['description'], required: false },
+        { model: Brand, as: 'brand', attributes: ['description'], required: false },
+      ],
+    });
   }
 
   async updateProduct(id, data) {
@@ -81,8 +95,9 @@ class ProductsService {
   }
 
   async deactivateProduct(id) {
+    // wrong
     const inactiveStatus = await Status.findOne({
-      where: { entity: 'products', description: 'Inactive' }
+      where: { description: 'Inactive' }
     });
 
     if (!inactiveStatus) {
